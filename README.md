@@ -1,135 +1,126 @@
-# wx_sweetpapers
+# sweetpapers
 
-## Dependencies
+Per-monitor wallpaper rotator for Wayland. Picks images from your wallpaper
+packs, hands them to [awww](https://codeberg.org/LGFae/awww) one monitor at a
+time, and exposes a control socket so wofi pickers, status bars, Qt apps, and
+hyprland binds can drive it.
 
-- Python
-- swww (<https://github.com/LGFae/swww>)
+## Install
 
-## Description
-
-Automatically sets multiple monitors to pre-determined 'packs' of wallpapers
-
-`wx_sweetpapers` includes 3 Components
-
-1. [Wallpaper Swapper](#wallpaper-swapper)
-2. [Chrome Extension](#chrome-extension)
-3. [HTTP Wallpaper Download Daemon](#http-wallpaper-download-daemon)
-4. [Wofi Menu](#wofi-menu)
-
-### Components
-
-#### Wallpaper Swapper
-
-Rotates between `packs` of wallpapers, randomly picking wallpapers
-from these packs and painting them to the respective monitors.
-
-#### Chrome Extension
-
-Tries to find an element on the current active tab with the class `WX_ACTIVEIMAGE`,
-and retrieve its `src`, if it cannot find an element like this, it uses
-the active tabs URL as the images `src`. It then transmits the image
-to the HTTP Download Daemon
-
-#### HTTP Wallpaper Download Daemon
-
-Basically, chrome extensions cannot automatically save to the file system,
-they can 'download' using the browser API, or save to the browser storage.
-But they cannot read or modify the base file system.
-
-To get around this, we spin up a service that listens to HTTP requests
-from the Chrome Extension. The chrome extension retrieves the image from
-the active tab, and transmits it to the Download Daemon,
-the download daemon then automatically names the image according to the
-required schema `<monitor>_<index>.<extension>` i.e. `1.png, 1_2.png, 1_3.png, etc`
-for the main Wallpaper Swapper to use
-
-#### Wofi Menu
-
-Allows for quick swapping between wallpaper packs
-
-![Wofi Menu](assets/wofi_menu.png "Wofi Menu")
-
-## TODO
-
-- [ ] Convert HTTP-Daemon to Go?
-
-## Settings
-
-### Arguments
-
-- `-c --config`: the configuration file to use
-- `-p --profile`: the actual 'pack' to use.
-
-`i.e.  sweetpapers.py -c sweetpapers.json -p Background1`
-Will swap between `Background1/Oceans` and `Background1/Mountains`
-picking random images each time
-
-```example
-
-- sweetpapers.jsonc
-- Wallpapers
-  |- Background1
-    |- Oceans
-      |- 1.jpg
-      |- 2.jpg
-    |- Mountains
-      |- 1.jpg
-      |- 2.jpg
-      |- 2_1.jpg
-
+```sh
+cargo build --release
+cp target/release/sweetpapers ~/.local/bin/
 ```
 
-### Configuration
+Requires [awww](https://codeberg.org/LGFae/awww) on `PATH` with `awww-daemon`
+running, plus a Wayland session.
 
-#### Example Configuration
+## Quick start
 
-```jsonc
-{
-  "screens": {
-    "1": {
-      "name": "DP-3",
-      "orientation": "landscape",
-    },
-    "2": {
-      "name": "HDMI-A-1",
-      "orientation": "portrait",
-    },
-    "3": {
-      "name": "DP-2",
-      "orientation": "portrait",
-    },
-  },
-  "defaults": {
-    "auto": false,
-    "debug": true,
-    "sequence": false,
-    "packs_location": "~/Wallpapers/packs",
-  },
-  "transition": {
-    "next": "ordered",
-    "fill_mode": "crop",
-    "interval": 5,
-    "transition_type": "fade",
-    "transition_duration": 2,
-    "transition_step": 20,
-    "transition_fps": 255,
-  },
-}
+1. Copy the example config to the default location:
+
+   ```sh
+   mkdir -p ~/.config/sweetpapers
+   cp config.example.jsonc ~/.config/sweetpapers/config.jsonc
+   $EDITOR ~/.config/sweetpapers/config.jsonc
+   ```
+
+2. Start the daemon (typically from your compositor's autostart):
+
+   ```sh
+   sweetpapers daemon -p Background1
+   ```
+
+3. Drive it from anywhere:
+
+   ```sh
+   sweetpapers status
+   sweetpapers pack Background2
+   sweetpapers next
+   ```
+
+## Commands
+
+| Command | What it does |
+|---|---|
+| `daemon -p PACK` | Run the rotation loop + control socket |
+| `status` | Current pack, paused state, per-monitor images |
+| `list` | Available packs + thumbnail paths |
+| `pack NAME` | Switch active pack |
+| `next` / `prev` | Force a swap to next / previous directory |
+| `pause` / `resume` | Stop / start automatic rotation |
+| `reload` | Re-read the config file (keeps current pack) |
+| `thumbnail NAME [--force]` | Get or regenerate a pack's thumbnail |
+
+Add `--json` to any command for raw response output.
+
+## Configuration
+
+The daemon reads `~/.config/sweetpapers/config.jsonc` by default
+(`$XDG_CONFIG_HOME/sweetpapers/config.jsonc`). Override with `--config`.
+
+See [`config.example.jsonc`](config.example.jsonc) for a commented
+template. Key fields:
+
+| Key | Meaning |
+|---|---|
+| `screens.<id>.name` | Monitor name (find via `hyprctl monitors`). |
+| `screens.<id>.orientation` | `landscape` or `portrait`. |
+| `defaults.auto` | `true`: pick images by orientation match. `false`: group files by numeric filename prefix (`1.jpg`, `2_3.png` → groups 1 and 2) and map group key to screen key. |
+| `defaults.sequence` | `true`: swap monitors one at a time with `interval` between each. `false`: swap all at once, then sleep. |
+| `defaults.packs_location` | Root directory of packs. `~` is expanded. |
+| `defaults.screen_order` | Optional. Order monitors are swapped in. Defaults to sorted `screens` keys. |
+| `transition.next` | `ordered` (cycle directories) or `random`. |
+| `transition.fill_mode` | `crop`, `fit`, `stretch`, or `no`. Passed to `awww --resize`. |
+| `transition.interval` | Seconds between swaps. |
+| `transition.transition_type` / `_duration` / `_step` / `_fps` | See [awww docs](https://codeberg.org/LGFae/awww). |
+
+### Pack layout
+
+```
+~/Wallpapers/packs/
+├── Background1/
+│   ├── Oceans/
+│   │   ├── 1.jpg
+│   │   └── 2.jpg
+│   ├── Mountains/
+│   │   ├── 1.jpg
+│   │   └── 2_1.jpg
+│   └── .sweet_thumb.jpg   ← optional manual thumbnail override
+└── Background2/
+    └── …
 ```
 
-- `defaults.random`: whether naming schema is followed or not,
-  if true, will automatically paint portrait images to portrait screens and horizontal
-  to horizontal screens (based on `screens.[id].orientation`) otherwise will paint
-  images based on their path prefix id (_1_.jpg, _2_.jpg) to `screens.[id].name`
+### Thumbnails
 
-- `defaults.sequence`: if true, will swap a single screen and wait for `transition.interval`
-  before swapping next if false, will swap all monitors at the same time, then wait
-  `transition.interval` before swapping all monitors again
+`sweetpapers list` returns per-pack thumbnails at
+`$XDG_CACHE_HOME/sweetpapers/thumbs/<name>.jpg` (256×256 JPEG q80). The
+daemon picks the first image alphabetically from the first subdirectory and
+center-crops it. Drop a `.sweet_thumb.jpg` (or `.png`) at a pack's root to
+override the source. Cache is invalidated when any pack file becomes newer
+than the thumbnail.
 
-- `defaults.packs_location`: the root pack, Main loop iterates over
-  `defaults.packs_location/(--profile)` directories. See: [Arguments](#arguments)
+## Hyprland integration
 
-- `transition.next`: (random, ordered), random will randomly select a directory to
-  switch to each loop, ordered will go through alphabetically
-- `transition.interval`: amount of time (seconds) between switching
-- `transition.transition_*`: See: [man swww-daemon](https://github.com/LGFae/swww/blob/main/doc/swww-img.1.scd)
+```lua
+hl.on("hyprland.start", function()
+    hl.exec_cmd("awww-daemon")
+    hl.exec_cmd("sweetpapers daemon -p Background1")
+end)
+
+hl.bind("SUPER + N",         hl.dsp.exec_cmd("sweetpapers next"))
+hl.bind("SUPER + SHIFT + N", hl.dsp.exec_cmd("sweetpapers prev"))
+hl.bind("SUPER + P",         hl.dsp.exec_cmd("sweetpapers pause"))
+```
+
+## How it works
+
+`sweetpapers daemon` runs in the background, rotates through your packs, and
+calls `awww img` to set each monitor. It also listens on a Unix socket at
+`$XDG_RUNTIME_DIR/sweetpapers.sock`.
+
+Running `sweetpapers` with any other subcommand (`status`, `pack`, `next`,
+...) opens that socket, sends one JSON message, prints the reply, and exits.
+
+See [`docs/protocol.md`](docs/protocol.md) if you want to talk to the socket
+from your own tools.
