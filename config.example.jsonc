@@ -1,0 +1,40 @@
+// Example config for sweetpapers.
+//
+// Copy to $XDG_CONFIG_HOME/sweetpapers/config.jsonc (or
+// ~/.config/sweetpapers/config.jsonc) and the daemon will pick it up
+// without needing the -c flag.
+//
+// To find your monitor names on Hyprland: `hyprctl monitors`.
+{
+  "screens": {
+    // The keys ("1", "2", ...) double as alphapack file prefixes.
+    // e.g. "2_anything.jpg" maps to screen "2" in that mode.
+    "1": {
+      "name": "HDMI-A-1",
+      "orientation": "landscape"
+    },
+    "2": {
+      "name": "DP-1",
+      "orientation": "portrait"
+    }
+  },
+  "defaults": {
+    // auto: true  → pick images by orientation match (recommended for mixed packs)
+    // auto: false → "alphapack" mode: group files by numeric filename prefix
+    "auto": true,
+    "sequence": false,
+    "packs_location": "~/Wallpapers/packs"
+    // Optional: explicit order in which monitors are swapped.
+    // Defaults to sorted screen keys.
+    // "screen_order": ["1", "2"],
+  },
+  "transition": {
+    "next": "ordered", // "ordered" | "random"
+    "fill_mode": "crop", // "crop" | "fit" | "stretch" | "no"
+    "interval": 300, // seconds between swaps
+    "transition_type": "fade", // see awww docs for the full list
+    "transition_duration": 2,
+    "transition_step": 20,
+    "transition_fps": 60
+  }
+}
