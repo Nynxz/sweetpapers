@@ -43,11 +43,7 @@ pub fn paint(transition: &Transition, monitor: &str, image: &Path) -> Result<()>
             stderr = %stderr.trim(),
             "awww failed (is awww-daemon running?)",
         );
-        anyhow::bail!(
-            "awww img failed for monitor {}: {}",
-            monitor,
-            stderr.trim()
-        );
+        anyhow::bail!("awww img failed for monitor {}: {}", monitor, stderr.trim());
     }
 
     info!(monitor, image = %image.display(), "painted");

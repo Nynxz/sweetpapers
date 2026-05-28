@@ -143,10 +143,7 @@ impl Config {
         if let Some(order) = &self.defaults.screen_order {
             for key in order {
                 if !self.screens.contains_key(key) {
-                    anyhow::bail!(
-                        "defaults.screen_order references unknown screen '{}'",
-                        key
-                    );
+                    anyhow::bail!("defaults.screen_order references unknown screen '{}'", key);
                 }
             }
         }

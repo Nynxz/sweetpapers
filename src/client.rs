@@ -13,9 +13,7 @@ use std::time::Duration;
 use anyhow::{Context, Result};
 
 use crate::paths::socket_path;
-use crate::proto::{
-    self, ListData, PackEntry, Request, Response, StatusData, ThumbnailData,
-};
+use crate::proto::{self, ListData, PackEntry, Request, Response, StatusData, ThumbnailData};
 
 pub fn dispatch(req: Request, json_out: bool) -> ExitCode {
     match send(req.clone()) {

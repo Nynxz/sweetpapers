@@ -60,7 +60,11 @@ impl ThumbnailManager {
 
     fn regen(&self, pack_name: &str, pack_dir: &Path, out: &Path) -> Result<PathBuf> {
         let source = pick_source(pack_dir)?.with_context(|| {
-            format!("no images found in pack '{}' ({})", pack_name, pack_dir.display())
+            format!(
+                "no images found in pack '{}' ({})",
+                pack_name,
+                pack_dir.display()
+            )
         })?;
         debug!(pack = pack_name, source = %source.display(), "generating thumbnail");
         let img = ImageReader::open(&source)
@@ -203,7 +207,11 @@ mod tests {
         let mgr = ThumbnailManager::new().unwrap();
 
         let path = mgr.ensure("MyPack", &pack).unwrap().expect("thumb path");
-        assert!(path.exists(), "thumbnail file should exist at {}", path.display());
+        assert!(
+            path.exists(),
+            "thumbnail file should exist at {}",
+            path.display()
+        );
 
         // Second call should reuse the cached file (no regen). Verify by
         // checking the size didn't change.

@@ -28,6 +28,7 @@ use signal_hook::consts::{SIGHUP, SIGINT, SIGTERM};
 use signal_hook::iterator::Signals;
 use tracing::{debug, error, info, warn};
 
+use crate::awww;
 use crate::config::Config;
 use crate::pack::{
     self, OrientationCache, Pack, Selection, pick_by_alphapack, pick_by_orientation,
@@ -36,7 +37,6 @@ use crate::paths::socket_path;
 use crate::proto::{
     self, ListData, MonitorState, PackEntry, Request, Response, StatusData, ThumbnailData,
 };
-use crate::awww;
 use crate::thumbnail::ThumbnailManager;
 
 // ---- Loop events ----------------------------------------------------------
@@ -111,11 +111,7 @@ pub fn run(config_path: PathBuf, profile: String) -> Result<()> {
     let config = Config::load(&config_path)?;
     let pack_dir = config.pack_dir(&profile);
     let pack = Pack::load(&profile, pack_dir)?;
-    info!(
-        profile,
-        directories = pack.directories.len(),
-        "loaded pack"
-    );
+    info!(profile, directories = pack.directories.len(), "loaded pack");
 
     let sock_path = socket_path();
     let listener = bind_socket(&sock_path)?;
@@ -162,8 +158,8 @@ fn bind_socket(path: &Path) -> Result<UnixListener> {
 // ---- Signal handling ------------------------------------------------------
 
 fn install_signal_handlers(tx: Sender<LoopEvent>) -> Result<()> {
-    let mut signals = Signals::new([SIGINT, SIGTERM, SIGHUP])
-        .context("registering signal handlers")?;
+    let mut signals =
+        Signals::new([SIGINT, SIGTERM, SIGHUP]).context("registering signal handlers")?;
     thread::spawn(move || {
         if let Some(sig) = signals.forever().next() {
             info!(signal = sig, "shutdown signal received");
@@ -233,8 +229,8 @@ fn run_loop(state: &mut DaemonState, rx: &Receiver<LoopEvent>) -> Result<()> {
                     let _ = reply.send(resp);
                     // If we just got resumed, schedule the next swap.
                     if !state.paused {
-                        next_swap_at = Instant::now()
-                            + Duration::from_secs(state.config.transition.interval);
+                        next_swap_at =
+                            Instant::now() + Duration::from_secs(state.config.transition.interval);
                     }
                 }
                 Ok(LoopEvent::Shutdown) | Err(_) => return Ok(()),
@@ -255,8 +251,8 @@ fn run_loop(state: &mut DaemonState, rx: &Receiver<LoopEvent>) -> Result<()> {
                 let resp = dispatch(state, req);
                 let _ = reply.send(resp);
                 if reset_timer {
-                    next_swap_at = Instant::now()
-                        + Duration::from_secs(state.config.transition.interval);
+                    next_swap_at =
+                        Instant::now() + Duration::from_secs(state.config.transition.interval);
                 }
             }
             Ok(LoopEvent::Shutdown) => return Ok(()),
@@ -316,9 +312,7 @@ fn dispatch(state: &mut DaemonState, req: Request) -> Response {
             Response::ok_empty()
         }
         Request::Thumbnail { name, force } => match cmd_thumbnail(state, &name, force) {
-            Ok(data) => {
-                Response::ok_with(&data).unwrap_or_else(|e| Response::err(e.to_string()))
-            }
+            Ok(data) => Response::ok_with(&data).unwrap_or_else(|e| Response::err(e.to_string())),
             Err(e) => Response::err(e.to_string()),
         },
     }
@@ -410,10 +404,7 @@ fn run_swap(state: &mut DaemonState) -> Result<()> {
         .pack
         .directory_at(state.config.transition.next, state.directory_index)
         .to_path_buf();
-    state.current_directory = dir
-        .file_name()
-        .and_then(|s| s.to_str())
-        .map(str::to_string);
+    state.current_directory = dir.file_name().and_then(|s| s.to_str()).map(str::to_string);
 
     let selection: Selection = if state.config.defaults.auto {
         let buckets = state.orientation_cache.buckets_for(&dir)?.clone();
@@ -423,8 +414,7 @@ fn run_swap(state: &mut DaemonState) -> Result<()> {
     };
 
     let order = state.config.ordered_screen_keys();
-    let by_screen: std::collections::HashMap<String, PathBuf> =
-        selection.into_iter().collect();
+    let by_screen: std::collections::HashMap<String, PathBuf> = selection.into_iter().collect();
 
     let sequence = state.config.defaults.sequence;
     let mut applied: Vec<PathBuf> = Vec::with_capacity(state.monitors.len());
@@ -433,7 +423,10 @@ fn run_swap(state: &mut DaemonState) -> Result<()> {
         let img = match by_screen.get(screen_key) {
             Some(p) => p,
             None => {
-                debug!(screen = screen_key, "no image selected for screen this round");
+                debug!(
+                    screen = screen_key,
+                    "no image selected for screen this round"
+                );
                 continue;
             }
         };
@@ -464,8 +457,7 @@ fn run_swap(state: &mut DaemonState) -> Result<()> {
 
     // Advance directory index for the next ordered swap.
     if !state.pack.directories.is_empty() {
-        state.directory_index =
-            (state.directory_index + 1) % state.pack.directories.len();
+        state.directory_index = (state.directory_index + 1) % state.pack.directories.len();
     }
     Ok(())
 }
