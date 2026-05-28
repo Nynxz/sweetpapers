@@ -78,7 +78,8 @@ fn print_human(req: &Request, resp: &Response) {
         | Request::Prev
         | Request::Pause
         | Request::Resume
-        | Request::Reload => println!("ok"),
+        | Request::Reload
+        | Request::Interval { .. } => println!("ok"),
     }
 }
 

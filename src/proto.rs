@@ -23,6 +23,9 @@ pub enum Request {
     Pause,
     Resume,
     Reload,
+    Interval {
+        secs: u64,
+    },
     Thumbnail {
         name: String,
         #[serde(default)]

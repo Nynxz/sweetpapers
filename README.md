@@ -50,6 +50,7 @@ running, plus a Wayland session.
 | `next` / `prev` | Force a swap to next / previous directory |
 | `pause` / `resume` | Stop / start automatic rotation |
 | `reload` | Re-read the config file (keeps current pack) |
+| `interval SECS` | Change the rotation interval at runtime |
 | `thumbnail NAME [--force]` | Get or regenerate a pack's thumbnail |
 
 Add `--json` to any command for raw response output.

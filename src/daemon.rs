@@ -305,6 +305,11 @@ fn dispatch(state: &mut DaemonState, req: Request) -> Response {
             Ok(()) => Response::ok_empty(),
             Err(e) => Response::err(e.to_string()),
         },
+        Request::Interval { secs } => {
+            state.config.transition.interval = secs;
+            info!(secs, "interval updated");
+            Response::ok_empty()
+        }
         Request::Thumbnail { name, force } => match cmd_thumbnail(state, &name, force) {
             Ok(data) => {
                 Response::ok_with(&data).unwrap_or_else(|e| Response::err(e.to_string()))

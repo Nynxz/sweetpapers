@@ -63,6 +63,11 @@ enum Cmd {
     Resume,
     /// Re-read the config file (keeps current pack).
     Reload,
+    /// Set the rotation interval in seconds at runtime.
+    Interval {
+        /// New interval in seconds.
+        secs: u64,
+    },
     /// Get or regenerate a pack's thumbnail.
     Thumbnail {
         /// Pack name.
@@ -101,6 +106,7 @@ fn main() -> ExitCode {
         Cmd::Pause => client::dispatch(Request::Pause, cli.json),
         Cmd::Resume => client::dispatch(Request::Resume, cli.json),
         Cmd::Reload => client::dispatch(Request::Reload, cli.json),
+        Cmd::Interval { secs } => client::dispatch(Request::Interval { secs }, cli.json),
         Cmd::Thumbnail { name, force } => {
             client::dispatch(Request::Thumbnail { name, force }, cli.json)
         }
