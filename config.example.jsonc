@@ -24,6 +24,8 @@
     "auto": true,
     "sequence": false,
     "packs_location": "~/Wallpapers/packs",
+    // Pack to start on when `sweetpapers daemon` is run without -p.
+    "pack": "Default",
     // Swap immediately when switching packs (default true).
     // false waits for the next scheduled tick.
     "swap_on_pack_change": true

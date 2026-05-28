@@ -55,7 +55,7 @@ struct DaemonState {
     config: Config,
     config_path: PathBuf,
     pack: Pack,
-    profile: String,
+    pack_name: String,
     directory_index: usize,
     paused: bool,
     last_images: Vec<PathBuf>,
@@ -66,7 +66,7 @@ struct DaemonState {
 }
 
 impl DaemonState {
-    fn new(config: Config, config_path: PathBuf, pack: Pack, profile: String) -> Result<Self> {
+    fn new(config: Config, config_path: PathBuf, pack: Pack, pack_name: String) -> Result<Self> {
         let monitors = config
             .screens
             .iter()
@@ -80,7 +80,7 @@ impl DaemonState {
             config,
             config_path,
             pack,
-            profile,
+            pack_name,
             directory_index: 0,
             paused: false,
             last_images: Vec::new(),
@@ -107,11 +107,18 @@ impl DaemonState {
 
 // ---- Entry point ----------------------------------------------------------
 
-pub fn run(config_path: PathBuf, profile: String) -> Result<()> {
+pub fn run(config_path: PathBuf, pack_arg: Option<String>) -> Result<()> {
     let config = Config::load(&config_path)?;
-    let pack_dir = config.pack_dir(&profile);
-    let pack = Pack::load(&profile, pack_dir)?;
-    info!(profile, directories = pack.directories.len(), "loaded pack");
+    let pack_name = pack_arg
+        .or_else(|| config.defaults.pack.clone())
+        .context("no pack given: pass -p PACK or set defaults.pack in the config")?;
+    let pack_dir = config.pack_dir(&pack_name);
+    let pack = Pack::load(&pack_name, pack_dir)?;
+    info!(
+        pack = pack_name,
+        directories = pack.directories.len(),
+        "loaded pack"
+    );
 
     let sock_path = socket_path();
     let listener = bind_socket(&sock_path)?;
@@ -121,7 +128,7 @@ pub fn run(config_path: PathBuf, profile: String) -> Result<()> {
     install_signal_handlers(tx.clone())?;
     spawn_listener(listener, tx.clone());
 
-    let mut state = DaemonState::new(config, config_path, pack, profile)?;
+    let mut state = DaemonState::new(config, config_path, pack, pack_name)?;
     prefetch_thumbnails(&state);
 
     let result = run_loop(&mut state, &rx);
@@ -320,7 +327,7 @@ fn dispatch(state: &mut DaemonState, req: Request) -> Response {
 
 fn build_status(state: &DaemonState) -> Result<StatusData> {
     Ok(StatusData {
-        pack: state.profile.clone(),
+        pack: state.pack_name.clone(),
         paused: state.paused,
         interval_secs: state.config.transition.interval,
         current_directory: state.current_directory.clone(),
@@ -351,7 +358,7 @@ fn cmd_pack(state: &mut DaemonState, name: &str) -> Result<()> {
     let dir = state.config.pack_dir(name);
     let pack = Pack::load(name, dir)?;
     state.pack = pack;
-    state.profile = name.to_string();
+    state.pack_name = name.to_string();
     state.directory_index = 0;
     state.current_directory = None;
     // Keep last_images so the next pick avoids repeats where possible.

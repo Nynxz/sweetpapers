@@ -40,9 +40,10 @@ enum Cmd {
         /// Defaults to $XDG_CONFIG_HOME/sweetpapers/config.jsonc.
         #[arg(short, long)]
         config: Option<PathBuf>,
-        /// Pack profile to start with.
+        /// Pack to start on.
+        /// Defaults to `defaults.pack` from the config if omitted.
         #[arg(short, long)]
-        profile: String,
+        pack: Option<String>,
     },
     /// Show current daemon state.
     Status,
@@ -82,7 +83,7 @@ fn main() -> ExitCode {
     init_logging();
     let cli = Cli::parse();
     match cli.command {
-        Cmd::Daemon { config, profile } => {
+        Cmd::Daemon { config, pack } => {
             let config_path = match resolve_config_path(config) {
                 Ok(p) => p,
                 Err(e) => {
@@ -90,7 +91,7 @@ fn main() -> ExitCode {
                     return ExitCode::FAILURE;
                 }
             };
-            match daemon::run(config_path, profile) {
+            match daemon::run(config_path, pack) {
                 Ok(()) => ExitCode::SUCCESS,
                 Err(e) => {
                     eprintln!("daemon error: {:#}", e);

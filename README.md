@@ -70,6 +70,7 @@ template. Key fields:
 | `defaults.auto` | `true`: pick images by orientation match. `false`: group files by numeric filename prefix (`1.jpg`, `2_3.png` → groups 1 and 2) and map group key to screen key. |
 | `defaults.sequence` | `true`: swap monitors one at a time with `interval` between each. `false`: swap all at once, then sleep. |
 | `defaults.packs_location` | Root directory of packs. `~` is expanded. |
+| `defaults.pack` | Pack the daemon starts on when `-p` is omitted. |
 | `defaults.screen_order` | Optional. Order monitors are swapped in. Defaults to sorted `screens` keys. |
 | `defaults.swap_on_pack_change` | `true` (default): switching packs swaps the wallpaper now. `false`: waits for the next tick. |
 | `transition.next` | `ordered` (cycle directories) or `random`. |

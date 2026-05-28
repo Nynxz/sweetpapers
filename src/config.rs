@@ -39,6 +39,9 @@ pub struct Defaults {
     #[serde(default)]
     pub sequence: bool,
     pub packs_location: String,
+    /// Pack the daemon starts on when `-p` is not passed.
+    #[serde(default)]
+    pub pack: Option<String>,
     /// Order in which monitors are swapped (and visible in `sequence` mode).
     /// Keys reference [`Config::screens`]. Defaults to sorted screen keys.
     #[serde(default)]
@@ -56,6 +59,7 @@ impl Default for Defaults {
             debug: false,
             sequence: false,
             packs_location: String::from("~/Wallpapers/packs"),
+            pack: None,
             screen_order: None,
             swap_on_pack_change: true,
         }
@@ -155,9 +159,9 @@ impl Config {
         expand_tilde(&self.defaults.packs_location)
     }
 
-    /// Returns the resolved pack directory for the given profile name.
-    pub fn pack_dir(&self, profile: &str) -> PathBuf {
-        self.packs_root().join(profile)
+    /// Returns the resolved pack directory for the given pack name.
+    pub fn pack_dir(&self, name: &str) -> PathBuf {
+        self.packs_root().join(name)
     }
 
     /// Ordered list of screen keys to apply swaps to.
