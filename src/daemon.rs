@@ -245,11 +245,16 @@ fn run_loop(state: &mut DaemonState, rx: &Receiver<LoopEvent>) -> Result<()> {
         let wait = next_swap_at.saturating_duration_since(Instant::now());
         match rx.recv_timeout(wait) {
             Ok(LoopEvent::Command { req, reply }) => {
-                // Some commands force an immediate swap; track that.
-                let force_swap = matches!(req, Request::Next | Request::Prev);
+                // Commands that change what's on screen now, or change the
+                // cadence, restart the interval clock from this moment.
+                let reset_timer = match &req {
+                    Request::Next | Request::Prev | Request::Interval { .. } => true,
+                    Request::Pack { .. } => state.config.defaults.swap_on_pack_change,
+                    _ => false,
+                };
                 let resp = dispatch(state, req);
                 let _ = reply.send(resp);
-                if force_swap {
+                if reset_timer {
                     next_swap_at = Instant::now()
                         + Duration::from_secs(state.config.transition.interval);
                 }
@@ -357,6 +362,9 @@ fn cmd_pack(state: &mut DaemonState, name: &str) -> Result<()> {
     state.current_directory = None;
     // Keep last_images so the next pick avoids repeats where possible.
     info!(pack = name, "switched pack");
+    if state.config.defaults.swap_on_pack_change {
+        run_swap(state)?;
+    }
     Ok(())
 }
 

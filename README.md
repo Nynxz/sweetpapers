@@ -71,6 +71,7 @@ template. Key fields:
 | `defaults.sequence` | `true`: swap monitors one at a time with `interval` between each. `false`: swap all at once, then sleep. |
 | `defaults.packs_location` | Root directory of packs. `~` is expanded. |
 | `defaults.screen_order` | Optional. Order monitors are swapped in. Defaults to sorted `screens` keys. |
+| `defaults.swap_on_pack_change` | `true` (default): switching packs swaps the wallpaper now. `false`: waits for the next tick. |
 | `transition.next` | `ordered` (cycle directories) or `random`. |
 | `transition.fill_mode` | `crop`, `fit`, `stretch`, or `no`. Passed to `awww --resize`. |
 | `transition.interval` | Seconds between swaps. |
