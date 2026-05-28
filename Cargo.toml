@@ -28,6 +28,9 @@ imagesize = "0.14"
 dirs = "6"
 signal-hook = "0.4"
 
+[dev-dependencies]
+tempfile = "3"
+
 [profile.release]
 lto = "thin"
 codegen-units = 1
