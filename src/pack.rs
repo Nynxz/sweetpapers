@@ -167,7 +167,11 @@ pub fn pick_by_orientation(
         let pool: Vec<&PathBuf> = if bucket.len() > 1 {
             let filtered: Vec<&PathBuf> =
                 bucket.iter().filter(|p| !last_images.contains(p)).collect();
-            if filtered.is_empty() { bucket.iter().collect() } else { filtered }
+            if filtered.is_empty() {
+                bucket.iter().collect()
+            } else {
+                filtered
+            }
         } else {
             bucket.iter().collect()
         };
@@ -225,8 +229,14 @@ fn list_images(dir: &Path) -> Result<Vec<PathBuf>> {
 
 fn numeric_prefix(path: &Path) -> Option<String> {
     let stem = path.file_stem()?.to_str()?;
-    let end = stem.find(|c: char| !c.is_ascii_digit()).unwrap_or(stem.len());
-    if end == 0 { None } else { Some(stem[..end].to_string()) }
+    let end = stem
+        .find(|c: char| !c.is_ascii_digit())
+        .unwrap_or(stem.len());
+    if end == 0 {
+        None
+    } else {
+        Some(stem[..end].to_string())
+    }
 }
 
 fn opposite(o: Orientation) -> Orientation {
@@ -300,7 +310,10 @@ mod tests {
     fn numeric_prefix_picks_leading_digits_only() {
         assert_eq!(numeric_prefix(Path::new("1.jpg")).as_deref(), Some("1"));
         assert_eq!(numeric_prefix(Path::new("2_3.png")).as_deref(), Some("2"));
-        assert_eq!(numeric_prefix(Path::new("42abc.jpg")).as_deref(), Some("42"));
+        assert_eq!(
+            numeric_prefix(Path::new("42abc.jpg")).as_deref(),
+            Some("42")
+        );
         assert_eq!(numeric_prefix(Path::new("abc.jpg")).as_deref(), None);
     }
 
@@ -312,10 +325,22 @@ mod tests {
             fs::create_dir_all(&d).unwrap();
         }
         let pack = Pack::load("p", tmp).unwrap();
-        assert_eq!(pack.directory_at(NextMode::Ordered, 0).file_name().unwrap(), "A");
-        assert_eq!(pack.directory_at(NextMode::Ordered, 1).file_name().unwrap(), "B");
-        assert_eq!(pack.directory_at(NextMode::Ordered, 2).file_name().unwrap(), "C");
-        assert_eq!(pack.directory_at(NextMode::Ordered, 3).file_name().unwrap(), "A");
+        assert_eq!(
+            pack.directory_at(NextMode::Ordered, 0).file_name().unwrap(),
+            "A"
+        );
+        assert_eq!(
+            pack.directory_at(NextMode::Ordered, 1).file_name().unwrap(),
+            "B"
+        );
+        assert_eq!(
+            pack.directory_at(NextMode::Ordered, 2).file_name().unwrap(),
+            "C"
+        );
+        assert_eq!(
+            pack.directory_at(NextMode::Ordered, 3).file_name().unwrap(),
+            "A"
+        );
     }
 
     #[test]
@@ -332,7 +357,11 @@ mod tests {
         assert_eq!(selection.len(), 2);
         // Both screens pick from landscape since portrait is empty.
         for (_, p) in &selection {
-            assert!(buckets.landscape.contains(p), "{} not in landscape", p.display());
+            assert!(
+                buckets.landscape.contains(p),
+                "{} not in landscape",
+                p.display()
+            );
         }
     }
 

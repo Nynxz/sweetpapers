@@ -20,6 +20,7 @@ Every request is tagged by `"cmd"`:
 {"cmd": "next"}                                  // or "prev"
 {"cmd": "pause"}                                 // or "resume"
 {"cmd": "reload"}
+{"cmd": "interval", "secs": 120}
 {"cmd": "thumbnail", "name": "Background1", "force": false}
 ```
 
@@ -68,7 +69,7 @@ Clients should fall back to a placeholder.
 {"name": "Background1", "path": "/home/…/.cache/sweetpapers/thumbs/Background1.jpg"}
 ```
 
-**`pack` / `next` / `prev` / `pause` / `resume` / `reload`**
+**`pack` / `next` / `prev` / `pause` / `resume` / `reload` / `interval`**
 
 No `data` payload on success. Receiving `ok: true` is the acknowledgement.
 

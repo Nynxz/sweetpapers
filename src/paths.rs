@@ -14,7 +14,8 @@ pub fn socket_path() -> PathBuf {
 
 /// `$XDG_CACHE_HOME/sweetpapers/` (or `~/.cache/sweetpapers/`).
 pub fn cache_dir() -> Result<PathBuf> {
-    let base = dirs::cache_dir().context("could not resolve cache directory (XDG_CACHE_HOME or HOME)")?;
+    let base =
+        dirs::cache_dir().context("could not resolve cache directory (XDG_CACHE_HOME or HOME)")?;
     Ok(base.join("sweetpapers"))
 }
 

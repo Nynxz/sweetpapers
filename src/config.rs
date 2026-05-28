@@ -43,6 +43,10 @@ pub struct Defaults {
     /// Keys reference [`Config::screens`]. Defaults to sorted screen keys.
     #[serde(default)]
     pub screen_order: Option<Vec<String>>,
+    /// Whether switching packs swaps the wallpaper immediately instead of
+    /// waiting for the next scheduled tick.
+    #[serde(default = "default_true")]
+    pub swap_on_pack_change: bool,
 }
 
 impl Default for Defaults {
@@ -53,8 +57,13 @@ impl Default for Defaults {
             sequence: false,
             packs_location: String::from("~/Wallpapers/packs"),
             screen_order: None,
+            swap_on_pack_change: true,
         }
     }
+}
+
+fn default_true() -> bool {
+    true
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -134,10 +143,7 @@ impl Config {
         if let Some(order) = &self.defaults.screen_order {
             for key in order {
                 if !self.screens.contains_key(key) {
-                    anyhow::bail!(
-                        "defaults.screen_order references unknown screen '{}'",
-                        key
-                    );
+                    anyhow::bail!("defaults.screen_order references unknown screen '{}'", key);
                 }
             }
         }

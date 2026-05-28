@@ -23,7 +23,10 @@
     // auto: false → "alphapack" mode: group files by numeric filename prefix
     "auto": true,
     "sequence": false,
-    "packs_location": "~/Wallpapers/packs"
+    "packs_location": "~/Wallpapers/packs",
+    // Swap immediately when switching packs (default true).
+    // false waits for the next scheduled tick.
+    "swap_on_pack_change": true
     // Optional: explicit order in which monitors are swapped.
     // Defaults to sorted screen keys.
     // "screen_order": ["1", "2"],
