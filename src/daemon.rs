@@ -291,11 +291,11 @@ fn dispatch(state: &mut DaemonState, req: Request) -> Response {
             Ok(()) => Response::ok_empty(),
             Err(e) => Response::err(e.to_string()),
         },
-        Request::Next => match cmd_step(state, 1) {
+        Request::Next => match cmd_step(state, true) {
             Ok(()) => Response::ok_empty(),
             Err(e) => Response::err(e.to_string()),
         },
-        Request::Prev => match cmd_step(state, -1) {
+        Request::Prev => match cmd_step(state, false) {
             Ok(()) => Response::ok_empty(),
             Err(e) => Response::err(e.to_string()),
         },
@@ -369,13 +369,17 @@ fn cmd_pack(state: &mut DaemonState, name: &str) -> Result<()> {
     Ok(())
 }
 
-fn cmd_step(state: &mut DaemonState, delta: i32) -> Result<()> {
-    let n = state.pack.directories.len() as i32;
+fn cmd_step(state: &mut DaemonState, forward: bool) -> Result<()> {
+    let n = state.pack.directories.len();
     if n == 0 {
         anyhow::bail!("pack has no directories");
     }
-    let new = ((state.directory_index as i32 + delta) % n + n) % n;
-    state.directory_index = new as usize;
+    state.directory_index = if forward {
+        (state.directory_index + 1) % n
+    } else {
+        // +n-1 is "-1" without going negative, since directory_index < n.
+        (state.directory_index + n - 1) % n
+    };
     run_swap(state)
 }
 
@@ -396,7 +400,7 @@ fn cmd_thumbnail(state: &DaemonState, name: &str, force: bool) -> Result<Thumbna
         state
             .thumbnails
             .ensure(name, &dir)?
-            .with_context(|| format!("no images in pack '{}'", name))?
+            .with_context(|| format!("no images in pack '{name}'"))?
     };
     Ok(ThumbnailData {
         name: name.to_string(),

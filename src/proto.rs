@@ -140,7 +140,7 @@ mod tests {
         let back: Request = serde_json::from_str(&s).unwrap();
         match back {
             Request::Pack { name } => assert_eq!(name, "Background1"),
-            other => panic!("wrong variant: {:?}", other),
+            other => panic!("wrong variant: {other:?}"),
         }
     }
 

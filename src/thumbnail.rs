@@ -29,7 +29,10 @@ pub struct ThumbnailManager {
 
 impl ThumbnailManager {
     pub fn new() -> Result<Self> {
-        let cache_dir = thumbnail_cache_dir()?;
+        Self::with_cache_dir(thumbnail_cache_dir()?)
+    }
+
+    fn with_cache_dir(cache_dir: PathBuf) -> Result<Self> {
         fs::create_dir_all(&cache_dir)
             .with_context(|| format!("creating thumbnail cache dir {}", cache_dir.display()))?;
         Ok(Self { cache_dir })
@@ -194,17 +197,12 @@ mod tests {
     #[test]
     fn generates_and_caches_thumbnail() {
         let tmp = tempdir();
-        let pack = tmp.join("MyPack");
+        let pack = tmp.path().join("MyPack");
         let sub = pack.join("Oceans");
         fs::create_dir_all(&sub).unwrap();
         write_test_image(&sub.join("1.png"), 800, 600);
 
-        // Redirect cache dir into tmp by setting XDG_CACHE_HOME.
-        // SAFETY: tests run single-threaded by default in this binary.
-        unsafe {
-            std::env::set_var("XDG_CACHE_HOME", tmp.join("cache"));
-        }
-        let mgr = ThumbnailManager::new().unwrap();
+        let mgr = ThumbnailManager::with_cache_dir(tmp.path().join("cache")).unwrap();
 
         let path = mgr.ensure("MyPack", &pack).unwrap().expect("thumb path");
         assert!(
@@ -224,7 +222,7 @@ mod tests {
     #[test]
     fn manual_override_is_preferred() {
         let tmp = tempdir();
-        let pack = tmp.join("OverridePack");
+        let pack = tmp.path().join("OverridePack");
         let sub = pack.join("Sub");
         fs::create_dir_all(&sub).unwrap();
         // a "real" image in the subdir
@@ -239,21 +237,12 @@ mod tests {
     #[test]
     fn returns_none_when_pack_is_empty() {
         let tmp = tempdir();
-        let pack = tmp.join("EmptyPack");
+        let pack = tmp.path().join("EmptyPack");
         fs::create_dir_all(&pack).unwrap();
         assert!(pick_source(&pack).unwrap().is_none());
     }
 
-    fn tempdir() -> PathBuf {
-        let p = std::env::temp_dir().join(format!(
-            "sweetpapers_test_{}_{}",
-            std::process::id(),
-            std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_nanos()
-        ));
-        fs::create_dir_all(&p).unwrap();
-        p
+    fn tempdir() -> tempfile::TempDir {
+        tempfile::tempdir().expect("create tempdir")
     }
 }

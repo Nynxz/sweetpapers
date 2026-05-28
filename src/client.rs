@@ -33,7 +33,7 @@ pub fn dispatch(req: Request, json_out: bool) -> ExitCode {
             }
         }
         Err(e) => {
-            eprintln!("error: {:#}", e);
+            eprintln!("error: {e:#}");
             ExitCode::FAILURE
         }
     }
@@ -93,7 +93,7 @@ fn print_status(resp: &Response) {
     );
     println!("interval: {}s", data.interval_secs);
     if let Some(dir) = &data.current_directory {
-        println!("dir:      {}", dir);
+        println!("dir:      {dir}");
     }
     println!("monitors:");
     for m in &data.monitors {
@@ -114,7 +114,7 @@ fn print_list(resp: &Response) {
     for PackEntry { name, thumbnail } in &data.packs {
         match thumbnail {
             Some(p) => println!("{}\t{}", name, p.display()),
-            None => println!("{}", name),
+            None => println!("{name}"),
         }
     }
 }
@@ -130,7 +130,7 @@ fn decode<T: serde::de::DeserializeOwned>(resp: &Response) -> Option<T> {
     match serde_json::from_value::<T>(data.clone()) {
         Ok(v) => Some(v),
         Err(e) => {
-            eprintln!("error: malformed response from daemon: {}", e);
+            eprintln!("error: malformed response from daemon: {e}");
             None
         }
     }

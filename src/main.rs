@@ -87,14 +87,14 @@ fn main() -> ExitCode {
             let config_path = match resolve_config_path(config) {
                 Ok(p) => p,
                 Err(e) => {
-                    eprintln!("config error: {:#}", e);
+                    eprintln!("config error: {e:#}");
                     return ExitCode::FAILURE;
                 }
             };
             match daemon::run(config_path, pack) {
                 Ok(()) => ExitCode::SUCCESS,
                 Err(e) => {
-                    eprintln!("daemon error: {:#}", e);
+                    eprintln!("daemon error: {e:#}");
                     ExitCode::FAILURE
                 }
             }

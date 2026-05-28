@@ -43,7 +43,7 @@ impl Pack {
             .collect();
         directories.sort();
         if directories.is_empty() {
-            anyhow::bail!("pack '{}' has no subdirectories", name);
+            anyhow::bail!("pack '{name}' has no subdirectories");
         }
         Ok(Self { directories })
     }
@@ -160,7 +160,7 @@ pub fn pick_by_orientation(
         };
 
         if bucket.is_empty() {
-            anyhow::bail!("no images available for screen '{}'", screen_key);
+            anyhow::bail!("no images available for screen '{screen_key}'");
         }
 
         // Exclude last_images when possible; otherwise pick from the full bucket.
@@ -179,7 +179,7 @@ pub fn pick_by_orientation(
         let chosen = pool
             .choose(&mut rng)
             .copied()
-            .ok_or_else(|| anyhow::anyhow!("empty selection pool for screen '{}'", screen_key))?;
+            .ok_or_else(|| anyhow::anyhow!("empty selection pool for screen '{screen_key}'"))?;
         out.push((screen_key.clone(), chosen.clone()));
     }
 
@@ -275,17 +275,8 @@ mod tests {
         img.save(path).unwrap();
     }
 
-    fn tempdir() -> PathBuf {
-        let p = std::env::temp_dir().join(format!(
-            "sweetpapers_pack_test_{}_{}",
-            std::process::id(),
-            std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_nanos()
-        ));
-        fs::create_dir_all(&p).unwrap();
-        p
+    fn tempdir() -> tempfile::TempDir {
+        tempfile::tempdir().expect("create tempdir")
     }
 
     fn config_with_screens(screens: &[(&str, &str, Orientation)]) -> Config {
@@ -321,10 +312,10 @@ mod tests {
     fn directory_at_ordered_advances_modulo_len() {
         let tmp = tempdir();
         for name in &["A", "B", "C"] {
-            let d = tmp.join(name);
+            let d = tmp.path().join(name);
             fs::create_dir_all(&d).unwrap();
         }
-        let pack = Pack::load("p", tmp).unwrap();
+        let pack = Pack::load("p", tmp.path().to_path_buf()).unwrap();
         assert_eq!(
             pack.directory_at(NextMode::Ordered, 0).file_name().unwrap(),
             "A"
@@ -396,7 +387,7 @@ mod tests {
     #[test]
     fn pick_by_alphapack_maps_prefix_to_screen() {
         let tmp = tempdir();
-        let dir = tmp.join("alpha");
+        let dir = tmp.path().join("alpha");
         fs::create_dir_all(&dir).unwrap();
         write_img(&dir.join("1.png"), 100, 100);
         write_img(&dir.join("2.png"), 100, 100);
@@ -416,16 +407,16 @@ mod tests {
     fn discover_packs_lists_subdirs_sorted() {
         let tmp = tempdir();
         for name in &["Mountain", "Ocean", ".hidden"] {
-            fs::create_dir_all(tmp.join(name)).unwrap();
+            fs::create_dir_all(tmp.path().join(name)).unwrap();
         }
-        let packs = discover_packs(&tmp).unwrap();
+        let packs = discover_packs(tmp.path()).unwrap();
         assert_eq!(packs, vec!["Mountain".to_string(), "Ocean".to_string()]);
     }
 
     #[test]
     fn orientation_cache_computes_then_caches() {
         let tmp = tempdir();
-        let dir = tmp.join("d");
+        let dir = tmp.path().join("d");
         fs::create_dir_all(&dir).unwrap();
         write_img(&dir.join("wide.png"), 200, 100);
         write_img(&dir.join("tall.png"), 100, 200);
